@@ -1,0 +1,44 @@
+<!--
+    Dynamic View
+    By: Sinistral Revicane of Faerie
+
+    For configuration options, please see app/dynamicView/viewBuilderConfig.js
+
+    THIS IS CURRENTLY STILL UNDER CONSTRUCTION
+-->
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="css/sinistral.css">
+    <script src="app/config.js"></script>
+    <script src="app/dynamicView/viewBuilderConfig.js"></script>
+    <script src="app/dynamicView/viewBuilder.js"></script>
+    <script>
+        document.addEventListener("onOverlayDataUpdate", function (e) {
+            var data = attachCustomOptions(e.detail);
+            for(dataVal in data.Combatant["YOU"])
+            {
+                console.log(data.Combatant["YOU"][dataVal]);
+            }
+            //viewBuilder.update(data);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            viewBuilder.init();
+        }, false);
+    </script>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="encounter">
+            <span id="encounterData">No data to show.</span>
+
+        </div>
+
+        <table id="combatantTable">
+
+        </table>
+    </div>
+</body>
+</html>
