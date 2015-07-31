@@ -1,9 +1,9 @@
 /*
-	GENERAL CONFIG FILE FOR EASIER OVERLAY USABILITY
+	GENERAL CONFIG FILE FOR EASIER OVERLAY USABILITY AND DEVELOPMENT
 	Created By: Sinistral Revicane of Faerie
 
 	This file is meant to help users and developers both in creating and configuring overlays. The goal is to make the options for overlays simple to use, access, and understand so
-	we can focus on creating awesome overlays, and less on figuring out what fields are needed.
+	we can focus on creating awesome overlays, and less on figuring out what fields are needed. This will also allow apps to be migrated very easily if data key values ever change.
 */
 
 
@@ -99,7 +99,7 @@ var encounterOptions = {
 		//DPS of all parsed players and pets over the last 30 seconds, rounded to nearest whole number.
 		DPS_30_SECONDS: "Last30DPS",
 		//DPS of all parsed players and pets over the last 60 seconds, rounded to nearest whole number.
-		DPS_60_SECONDS: "Last60DPS",
+		DPS_60_SECONDS: "Last60DPS"
 	},
 
 	/*
@@ -229,7 +229,7 @@ var encounterOptions = {
 		NAME_TRUNC15: "NAME15",
 
 		/*
-			Custom options are defined below here. They delibrately follow different naming conventions to minimize the chance of clashing with future updates.
+		Custom options are defined below here. They delibrately follow different naming conventions to minimize the chance of clashing with future updates.
 		*/
 
 		//Reports the value of healed * (OverHeal%/100) to get total amount of actual healing performed by entity. Since OVERHEAL_PERCENT is a rounded value, 
@@ -241,62 +241,61 @@ var encounterOptions = {
 		CUSTOM_TRUNCX: "custom_truncx"
 	};
 
-	/**
-		Attaches custom options to the data passed down from the plugin for convenience. If you want to use custom options, make sure this is the first function you call.
-		Don't be concerned about passing the giant JSON object around, JS uses pointers for this under the hood, it has no overhead.
-		Feel free to add to this as needed. If you need a custom encounter variable, just add a field to data.Encounter. Don't forget to add your key to the option map.
 
-		@param {Encounter, Combatant, isActive} data - JSON of the current parse
-		@returns {Encounter, Combatant, isActive} Mutated JSON with custom options
-	*/
-	function attachCustomOptions(data)
+
+/**
+	Attaches custom options to the data passed down from the plugin for convenience. If you want to use custom options, make sure this is the first function you call.
+	Don't be concerned about passing the giant JSON object around, JS uses pointers for this under the hood, it has no overhead.
+	Feel free to add to this as needed. If you need a custom encounter variable, just add a field to data.Encounter. Don't forget to add your key to the option map.
+
+	@param {Encounter, Combatant, isActive} data - JSON of the current parse
+	@returns {Encounter, Combatant, isActive} Mutated JSON with custom options
+*/
+function attachCustomOptions(data)
+{
+	var combatant,
+	overhealPercent;
+
+	for(combatantKey in data.Combatant)
 	{
-		var combatant,
-			overhealPercent;
+		var overhealPercent;
 
-		for(combatantKey in data.Combatant)
-		{
-			var overhealPercent;
+		combatant = data.Combatant[combatantKey];
 
-			combatant = data.Combatant[combatantKey];
+		//CUSTOM_ACTUAL_HEALING
+		overhealPercent = parseInt(combatant[combatantOptions.OVERHEAL_PERCENT].substring(0, combatant[combatantOptions.OVERHEAL_PERCENT].length - 1));
+		combatant[combatantOptions.CUSTOM_ACTUAL_HEALING] = Math.floor(combatant.healed * (1 - (overhealPercent/100)));
 
-			//CUSTOM_ACTUAL_HEALING
-			//The % will always be in the same spot, no point in wasting processing power with indexOf, just cut it out directly.
-			overhealPercent = parseInt(combatant[combatantOptions.OVERHEAL_PERCENT].substring(0, combatant[combatantOptions.OVERHEAL_PERCENT].length - 1));
-			combatant[combatantOptions.CUSTOM_ACTUAL_HEALING] = Math.floor(combatant.healed * (1 - (overhealPercent/100)));
-
-			//CUSTOM_TRUNCX
-			combatant[combatantOptions.CUSTOM_TRUNCX] = function(truncVal) {
-				//We don't need to worry about going out of bounds with substring on the upper bound, JS is smart enough to handle this... or stupid enough not to. I'm not sure which.
-				//We also trim incase we truncated at a space.
-				return combatant.name.substring(0, truncVal);
-			}
+		//CUSTOM_TRUNCX
+		combatant[combatantOptions.CUSTOM_TRUNCX] = function(truncVal) {
+			return combatant.name.substring(0, truncVal);
 		}
-
-		return data;
 	}
 
-	/*
-		This is a very optimized function to inject data values into your strings. It's usage is very simple:
-		Example Usage: loadOptions("Duration: {0}  /  Damage: {1}  /  Healed: {2}", [combatantOptions.DURATION, combatantOptions.DAMAGE, combatantOptions.HEALED], data.Combatant["YOU"])
-		Note that you will likely want to call this function inside of a loop that iterates through your combatants. This function expects a singular combatant. data.Encounter can be passed in simply,
-		since it does not hold an array as of 7/31/2015.
+	return data;
+}
 
-		@param {string} str - The string containing placeholders to inject data into. Placeholders should be sequential, unique, and enclosed in {}. Ex: {0}
-		@param {string[]} options - The data keys you wish to replace sequentially. They will be injected from right to left. Index 0 will replace {0}, 1 will replace {1}, and so on. 
-									For convenience and ease of updating, it is recommend to use the combatantOptions and encounterOptions enum defined above. Ex: [combatantOptions.DAMAGE, combatantOptions.DPS]
-		@param {combatant/encounter} dictionary - The data scope that will be injecting data into str. See the above note for examples and explanation.
+/*
+	This is a very optimized function to inject data values into your strings. It's usage is very simple:
+	Example Usage: loadOptions("Duration: {0}  /  Damage: {1}  /  Healed: {2}", [combatantOptions.DURATION, combatantOptions.DAMAGE, combatantOptions.HEALED], data.Combatant["YOU"])
+	Note that you will likely want to call this function inside of a loop that iterates through your combatants. This function expects a singular combatant. data.Encounter can be passed in simply,
+	since it does not hold an array as of 7/31/2015.
 
-		@returns {string} The string containing the injected data.
-	*/
-	function loadOptions(str, options, dictionary)
+	@param {string} str - The string containing placeholders to inject data into. Placeholders should be sequential, unique, and enclosed in {}. Ex: {0}
+	@param {string[]} options - The data keys you wish to replace sequentially. They will be injected from right to left. Index 0 will replace {0}, 1 will replace {1}, and so on. 
+	For convenience and ease of updating, it is recommend to use the combatantOptions and encounterOptions enum defined above. Ex: [combatantOptions.DAMAGE, combatantOptions.DPS]
+	@param {combatant/encounter} dictionary - The data scope that will be injecting data into str. See the above note for examples and explanation.
+
+	@returns {string} The string containing the injected data.
+*/
+function loadOptions(str, options, dictionary)
+{
+	var injectedString = str;
+
+	for(var i = 0; i < options.length; i++)
 	{
-		var injectedString = str;
-
-		for(var i = 0; i < options.length; i++)
-		{
-			injectedString = injectedString.replace("{" + i + "}", dictionary[options[i]])
-		}
-
-		return injectedString;
+		injectedString = injectedString.replace("{" + i + "}", dictionary[options[i]])
 	}
+
+	return injectedString;
+}
