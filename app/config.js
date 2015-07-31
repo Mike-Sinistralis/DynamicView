@@ -229,7 +229,7 @@ var encounterOptions = {
 		NAME_TRUNC15: "NAME15",
 
 		/*
-		Custom options are defined below here. They delibrately follow different naming conventions to minimize the chance of clashing with future updates.
+			Custom options are defined below here. They delibrately follow different naming conventions to minimize the chance of clashing with future updates.
 		*/
 
 		//Reports the value of healed * (OverHeal%/100) to get total amount of actual healing performed by entity. Since OVERHEAL_PERCENT is a rounded value, 
