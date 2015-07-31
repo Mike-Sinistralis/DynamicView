@@ -232,7 +232,8 @@ var encounterOptions = {
 			Custom options are defined below here. They delibrately follow different naming conventions to minimize the chance of clashing with future updates.
 		*/
 
-		//Reports the value of healed * (OverHeal%/100) to get total amount of actual healing performed by entity.
+		//Reports the value of healed * (OverHeal%/100) to get total amount of actual healing performed by entity. Since OVERHEAL_PERCENT is a rounded value, 
+		//this will have a small margin of error of +-.5% of your total healing done.
 		CUSTOM_ACTUAL_HEALING: "custom_actual_healing",
 
 		//Pass in a integer, and this will return a name truncated to X characters. Example: combatantOptions.CUSTOM_TRUNCX(13) is equivalent to NAME_TRUNC13. X can be any whole number. 
@@ -262,7 +263,7 @@ var encounterOptions = {
 			//CUSTOM_ACTUAL_HEALING
 			//The % will always be in the same spot, no point in wasting processing power with indexOf, just cut it out directly.
 			overhealPercent = parseInt(combatant[combatantOptions.OVERHEAL_PERCENT].substring(0, combatant[combatantOptions.OVERHEAL_PERCENT].length - 1));
-			combatant[combatantOptions.CUSTOM_ACTUAL_HEALING] = combatant.healed * (overhealPercent/100);
+			combatant[combatantOptions.CUSTOM_ACTUAL_HEALING] = Math.floor(combatant.healed * (1 - (overhealPercent/100)));
 
 			//CUSTOM_TRUNCX
 			combatant[combatantOptions.CUSTOM_TRUNCX] = function(truncVal) {
