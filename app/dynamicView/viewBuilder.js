@@ -1,70 +1,140 @@
 viewBuilder = (function(){
 
-    var currentView = dynamicViewList[0],
+    var currentView = 0,
         currentData = null,
 
         encounterData = null,
         conbatantTable = null,
 
-        lastHeaderView = null,
-        lastBodyView = null,
-        cachedHeader = null,
-        cachedBody = null,
+        defCache = {
+            encounterDef: null,
+            headerDef: null,
+            bodyDef: null
+        },
 
-        preRenderedView = {
-            encounter: {
-                text: "",
-                html: ""
-            },
-            header: {
-                text: "",
-                html: ""
-            },
-            body: {
-                text: "",
-                html: ""
-            }
-        };
-
-function updateCombatantListHeader() {
-    var tableHeader = document.createElement("thead"),
-        headerRow = tableHeader.insertRow(),
-
-        //TODO:
-        headerDefine = viewBuilder.buildViewHeader();
-
-    tableHeader.id = "combatantTableHeader";
-
-    for(var i = 0; i < headerDefine.length; i++) {
-        var cell = document.createElement("th");
-
-        if(headerDefine[i].text) 
-        {
-            cell.innerText = headerDefine[i].text;
-        } 
-        else
-        {
-            cell.innerHTML = headerDefine[i].html;
+        defType = {
+            ENCOUNTER: "encounterDef",
+            HEADER: "headerDef",
+            BODY: "bodyDef"
         }
 
-        cell.style.width = headerDefine[i].width;
-        cell.style.maxWidth = headerDefine[i].width;
+    function getCurrentView(def)
+    {
+        var view,
+            viewArray;
 
-        if(headerDefine[i].span) 
+        if(def == defType.ENCOUNTER)
         {
-            cell.colSpan = headerDefine[i].span;
+            return dynamicViewList[currentView].encounterDef;
         }
 
-        if(headerDefine[i].align) 
+        view = globalView[def];
+
+        viewIterable = dynamicViewList[currentView][def];
+
+        for(var i = 0; i < viewIterable.length; i++)
         {
-            cell.style.textAlign = headerDefine[i].align;
+            view.push(viewIterable[i]);
         }
 
-        headerRow.appendChild(cell);
+        defCache[def] = view;
+
+        return view;
     }
 
-    table.tHead = tableHeader;
-}
+    function buildViewHeader()
+    {
+        var tableHeader = document.createElement("thead"),
+            headerRow = tableHeader.insertRow(),
+            currentView = defCache.headerDef || getCurrentView(defType.HEADER);
+        
+        tableHeader.id = "combatantTableHeader";
+
+        for(var i = 0; i < currentView.length; i++) {
+            var cell = document.createElement("th");
+
+            if(currentView[i].text) 
+            {
+                cell.innerText = currentView[i].text;
+            } 
+            else
+            {
+                cell.innerHTML = currentView[i].html;
+            }
+
+            cell.style.width = currentView[i].width;
+            cell.style.maxWidth = currentView[i].width;
+
+            if(currentView[i].span) 
+            {
+                cell.colSpan = currentView[i].span;
+            }
+
+            if(currentView[i].align) 
+            {
+                cell.style.textAlign = currentView[i].align;
+            }
+
+            headerRow.appendChild(cell);
+        }
+
+        combatantTable.tHead = tableHeader;
+    }
+
+    function buildViewBody()
+    {
+
+    }
+
+    function buildViewEncounter()
+    {
+        var encounterTemplate,
+            preRenderedStore,
+            currentView = defCache.encounterDef || getCurrentView(defType.ENCOUNTER);
+
+        if(currentView.html)
+        {
+            encounterTemplate = currentView.html;
+            encounterData.innerHTML = loadOptions(encounterTemplate, currentView.options, getEncounterData(currentData));
+        }
+        else
+        {
+            encounterTemplate = currentView.text;
+            encounterData.innerText = loadOptions(encounterTemplate, currentView.options, getEncounterData(currentData));
+        }
+    }
+
+
+    function ViewBuilder() {};
+
+    ViewBuilder.prototype.update = function(data) {
+        if(data)
+        {
+            currentData = data;
+        }
+
+        buildViewEncounter();
+        buildViewHeader();
+        buildViewBody();
+    };
+
+    ViewBuilder.prototype.setView = function(viewIndex) {
+        currentView = viewIndex;
+
+        defCache.encounterDef = null;
+        defCache.headerDef = null;
+        defCache.bodyDef = null;
+
+        this.update();
+    };
+
+    ViewBuilder.prototype.init = function() {
+        encounterData = document.getElementById("encounterData");
+        combatantTable = document.getElementById("combatantTable");
+    };
+
+    return new ViewBuilder();
+}());
 
 function updateCombatantList(data) {
     var table = document.getElementById('combatantTable');
@@ -139,88 +209,3 @@ function updateCombatantList(data) {
         table.appendChild(newTableBody);
     }
 }
-
-    function buildViewHeader()
-    {
-
-    }
-
-    function buildViewBody()
-    {
-
-    }
-
-    function buildViewEncounter()
-    {
-        var encounterTemplate,
-            preRenderedStore;
-
-        if(currentView.encounterDef.html)
-        {
-            encounterTemplate = currentView.encounterDef.html;
-            preRenderedView.encounter.html = loadOptions(encounterTemplate, currentView.encounterDef.options, getEncounterData(currentData));
-        }
-        else
-        {
-            encounterTemplate = currentView.encounterDef.text;
-            preRenderedView.encounter.text = loadOptions(encounterTemplate, currentView.encounterDef.options, getEncounterData(currentData));
-        }
-    }
-
-    function renderView()
-    {
-        if(preRenderedView.encounter.html)
-        {
-            encounterData.innerHTML = preRenderedView.encounter.html;
-        }
-        else
-        {
-            encounterData.innerText = preRenderedView.encounter.text;
-        }
-
-        if(preRenderedView.header.html)
-        {
-
-        }
-        else
-        {
-
-        }
-
-        if(preRenderedView.body.html)
-        {
-
-        }
-        else
-        {
-
-        }
-    }
-
-
-
-    function ViewBuilder() {};
-
-    ViewBuilder.prototype.update = function(data) {
-        if(data)
-        {
-            currentData = data;
-        }
-        buildViewEncounter();
-        buildViewHeader();
-        buildViewBody();
-        renderView();
-    };
-
-    ViewBuilder.prototype.setView = function(viewIndex) {
-        currentView = dynamicViewList[viewIndex];
-        this.update();
-    };
-
-    ViewBuilder.prototype.init = function() {
-        encounterData = document.getElementById("encounterData");
-        combatantTable = document.getElementById("combatantTable");
-    };
-
-    return new ViewBuilder();
-}());

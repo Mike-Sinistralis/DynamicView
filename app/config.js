@@ -378,7 +378,7 @@ var inactivityTracker = (function() {
         setInterval(function() {
             if(sleepDuration) sleepDuration--;
             if(inactivityCount < inactivityTrackerOptions.threshold) inactivityCount++;
-        }. 1000);
+        }, 1000);
 
         inactivityInterface = {
             update: function(data) {
