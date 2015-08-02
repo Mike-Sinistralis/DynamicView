@@ -16,12 +16,14 @@
     <script src="app/dynamicView/viewBuilder.js"></script>
     <script>
         document.addEventListener("onOverlayDataUpdate", function (e) {
-            var data = attachCustomOptions(e.detail);
-            for(dataVal in data.Combatant["YOU"])
+            var data;
+            //Check for activity, no point in doing all the processing if nothing relevant has changed.
+            inactivityTracker.update(e.detail);
+
+            if(inactivityTracker.getIsActive())
             {
-                console.log(data.Combatant["YOU"][dataVal]);
+                viewBuilder.update(attachCustomOptions(e.detail));
             }
-            //viewBuilder.update(data);
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -32,8 +34,7 @@
 <body>
     <div id="wrapper">
         <div id="encounter">
-            <span id="encounterData">No data to show.</span>
-
+            <span id="encounterData" style="color:white;">No data to show.</span>
         </div>
 
         <table id="combatantTable">

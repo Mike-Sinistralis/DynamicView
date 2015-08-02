@@ -1,65 +1,30 @@
 viewBuilder = (function(){
 
-	var viewType = {
-	    	DAMAGE: "Damage",
-	    	HEALING: "Healing",
-	    	TANKING: "Tanking"
-		},
-		currentView = viewType.DAMAGE,
-		currentData = null,
+    var currentView = dynamicViewList[0],
+        currentData = null,
 
-		encounterData = null,
-		conbatantTable = null,
+        encounterData = null,
+        conbatantTable = null,
 
-   		lastHeaderView = null,
-   		lastBodyView = null,
-   		cachedHeader = null,
-   		cachedBody = null;
+        lastHeaderView = null,
+        lastBodyView = null,
+        cachedHeader = null,
+        cachedBody = null,
 
-	function parseActFormat(str, dictionary) 
-	{
-	    var result = "";
-
-	    while(str.indexOf("{") > -1)
-	    {
-	    	
-	    }
-
-	    var currentIndex = 0;
-	    do {
-	        var openBraceIndex = str.indexOf('{', currentIndex);
-	        if (openBraceIndex < 0) {
-	            result += str.slice(currentIndex);
-	            break;
-	        }
-	        else {
-	            result += str.slice(currentIndex, openBraceIndex);
-	            var closeBraceIndex = str.indexOf('}', openBraceIndex);
-	            if (closeBraceIndex < 0) {
-	                // parse error!
-	                console.log("parseActFormat: Parse error: missing close-brace for " + openBraceIndex.toString() + ".");
-	                return "ERROR";
-	            }
-	            else {
-	                var tag = str.slice(openBraceIndex + 1, closeBraceIndex);
-	                if (typeof dictionary[tag] !== 'undefined') {
-	                    result += dictionary[tag];
-	                } else {
-	                    console.log("parseActFormat: Unknown tag: " + tag);
-	                    result += "ERROR";
-	                }
-	                currentIndex = closeBraceIndex + 1;
-	            }
-	        }
-	    } while (currentIndex < str.length);
-
-	    return result;
-	}
-
-	function updateEncounter(data) 
-	{
-    	encounterData.innerText = parseActFormat(encounterDefine, data.Encounter)
-	}
+        preRenderedView = {
+            encounter: {
+                text: "",
+                html: ""
+            },
+            header: {
+                text: "",
+                html: ""
+            },
+            body: {
+                text: "",
+                html: ""
+            }
+        };
 
 function updateCombatantListHeader() {
     var tableHeader = document.createElement("thead"),
@@ -175,89 +140,87 @@ function updateCombatantList(data) {
     }
 }
 
-	function buildViewHeader()
-	{
-		var headerDefinition,
-			appendingHeader;
+    function buildViewHeader()
+    {
 
-		if(lastHeaderView !== currentView)
-		{
-			headerDefinition = globalView.headerDef;
+    }
 
-			switch(currentView)
-			{
-				case viewType.DAMAGE:
-					appendingHeader = damageView.headerDef;
-					break;
-				case viewType.HEALING:
-					appendingHeader = healingView.headerDef;
-					break;
-				case viewType.TANKING:
-					appendingHeader = tankingView.headerDef;
-					break;
-			}
+    function buildViewBody()
+    {
 
-			lastHeaderView = currentView;
-			cachedHeader = headerDefinition.concat(appendingHeader);
-		}
+    }
 
-		return cachedHeader;
-	}
+    function buildViewEncounter()
+    {
+        var encounterTemplate,
+            preRenderedStore;
 
-	function buildViewBody()
-	{
-		var bodyDefinition,
-			appendingBody;
+        if(currentView.encounterDef.html)
+        {
+            encounterTemplate = currentView.encounterDef.html;
+            preRenderedView.encounter.html = loadOptions(encounterTemplate, currentView.encounterDef.options, getEncounterData(currentData));
+        }
+        else
+        {
+            encounterTemplate = currentView.encounterDef.text;
+            preRenderedView.encounter.text = loadOptions(encounterTemplate, currentView.encounterDef.options, getEncounterData(currentData));
+        }
+    }
 
-		if(lastBodyView !== currentView)
-		{
-			bodyDefinition = globalView.bodyDef;
+    function renderView()
+    {
+        if(preRenderedView.encounter.html)
+        {
+            encounterData.innerHTML = preRenderedView.encounter.html;
+        }
+        else
+        {
+            encounterData.innerText = preRenderedView.encounter.text;
+        }
 
-			switch(currentView)
-			{
-				case viewType.DAMAGE:
-					appendingBody = damageView.bodyDef;
-					break;
-				case viewType.HEALING:
-					appendingBody = healingView.bodyDef;
-					break;
-				case viewType.TANKING:
-					appendingBody = tankingView.bodyDef;
-					break;
-			}
+        if(preRenderedView.header.html)
+        {
 
-			lastBodyView = currentView;
-			cachedBody = bodyDefinition.concat(appendingBody);
-		}
+        }
+        else
+        {
 
-		return cachedBody;
-	}
+        }
 
-	function buildEncounter()
-	{
+        if(preRenderedView.body.html)
+        {
 
-	}
+        }
+        else
+        {
+
+        }
+    }
 
 
 
-	function ViewBuilder() {};
+    function ViewBuilder() {};
 
-	ViewBuilder.prototype.update = function(data) {
-		if(data)
-		{
-			currentData = data;
-		}
-		//TODO: Build Everything
-	};
+    ViewBuilder.prototype.update = function(data) {
+        if(data)
+        {
+            currentData = data;
+        }
+        buildViewEncounter();
+        buildViewHeader();
+        buildViewBody();
+        renderView();
+    };
 
-	ViewBuilder.prototype.setView = function(view) {
-		currentView = view;
-	};
+    ViewBuilder.prototype.setView = function(viewIndex) {
+        currentView = dynamicViewList[viewIndex];
+        this.update();
+    };
 
-	ViewBuilder.prototype.init = function() {
-		encounterData = document.getElementById("encounterData");
-		combatantTable = document.getElementById("combatantTable");
-	};
+    ViewBuilder.prototype.init = function() {
+        encounterData = document.getElementById("encounterData");
+        combatantTable = document.getElementById("combatantTable");
+    };
 
     return new ViewBuilder();
 }());

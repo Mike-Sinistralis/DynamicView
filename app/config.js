@@ -20,11 +20,11 @@ var encounterOptions = {
         //Unknown purpose
         ENCOUNTER_T: "t",
         //Tends to be the first monster encountered during a parse OR "Encounter"
-        ENCOUNTER_TITLE: "title",
+        TITLE: "title",
         //Duration in M:SS format
-        ENCOUNTER_DURATION: "duration",
+        DURATION: "duration",
         //Duration in S format
-        ENCOUNTER_DURATION_SECONDS: "DURATION",
+        DURATION_SECONDS: "DURATION",
         //Damage done by all parsed players and pets.
         DAMAGE: "damage",
         //Millions of damage done by all parsed players and pets.
@@ -239,7 +239,42 @@ var encounterOptions = {
         //Pass in a integer, and this will return a name truncated to X characters. Example: combatantOptions.CUSTOM_TRUNCX(13) is equivalent to NAME_TRUNC13. X can be any whole number. 
         //It will break if a string or fraction is used, I'm not wasting function calls to check this. Use this correctly.
         CUSTOM_TRUNCX: "custom_truncx"
+    },
+
+    /*
+        The inactivityTracker will quickly compare a few fields of the data being passed down from ACT to determine if there is a reason to actually update the view. This will save on processing power
+        when you are finished with a fight as ACT has a habit of sending down data when you personally are doing nothing.
+
+        The threshold is the number of seconds that it takes to determine inactivity.
+
+        The sleep length is how long the function ignores activity when it determines activity is occuring. For example, if it checks data and see activity, it will stop making checks for the duration of
+        the sleep length. Sleep length is considered active when calculating inactivity.
+
+        Note that the overlay you are using must be checking the result of the inactivityTracker.isActive() call for these options to have any effect. See sinistral_dynamicView.html for examples.
+    */
+    inactivityTrackerOptions = {
+        enabled: true,
+        threshold: 30,
+        sleepLength: 10
     };
+
+/**
+    Utility functions to get elements inside the JSON data struct. We want to go through this list so if this structure ever changes, it is trivial to update all the views.
+*/
+function getEncounterData(data)
+{
+    return data.Encounter;
+}
+
+function getCombatantList(data)
+{
+    return data.Combatant;
+}
+
+function getIsActive(data)
+{
+    return isActive;
+}
 
 
 
@@ -294,8 +329,75 @@ function loadOptions(str, options, dictionary)
 
     for(var i = 0; i < options.length; i++)
     {
-        injectedString = injectedString.replace("{" + i + "}", dictionary[options[i]])
+        if(dictionary[options[i]] == undefined)
+        {
+            console.log("Unable to locate value for {" + i + "} in string " + str + ". Make sure the key is correctly entered. If it is, then the config might have an incorrect value and needs logged as a bug!");
+        }
+        else
+        {
+            injectedString = injectedString.replace("{" + i + "}", dictionary[options[i]])
+        }
     }
 
     return injectedString;
 }
+
+/*
+    Object that expects data passed to it to determine if a overlay render is needed or not. To use, simply pass data into inactivityTracker.update, and then check inactivityTracker.getIsActive to determine
+    if you should run any logic. This helps save processing power when the player is running through the world and is around combat, but not actively contributing to combat. See sinistralis_dynamicView.html
+    for a usage example.    
+*/
+var inactivityTracker = (function() {
+    var lastUpdateSwings = 0,
+        lastUpdateCasts = 0,
+        inactivityCount = 0,
+        sleepDuration = 0,
+        isActive = true,
+        inactivityInterface = null;
+
+    function determineActivity(data)
+    {
+        if(sleepDuration == 0)
+        {
+            if(lastUpdateSwings !== data.Encounter[encounterOptions.SWINGS] || lastUpdateCasts !== data.Encounter[encounterOptions.HEALS])
+            {
+                lastUpdateSwings = data.Encounter[encounterOptions.SWINGS];
+                lastUpdateCasts = data.Encounter[encounterOptions.HEALS];
+                inactivityCount = 0;
+                sleepDuration = inactivityTrackerOptions.sleepLength;
+            }
+        }
+
+        isActive = inactivityCount < inactivityTrackerOptions.threshold
+    }
+
+
+
+    if(inactivityTrackerOptions.enabled === true)
+    {
+        setInterval(function() {
+            if(sleepDuration) sleepDuration--;
+            if(inactivityCount < inactivityTrackerOptions.threshold) inactivityCount++;
+        }. 1000);
+
+        inactivityInterface = {
+            update: function(data) {
+                determineActivity(data);
+            },
+            getIsActive: function() {
+                return isActive;
+            }
+        };
+    }
+    else
+    {
+        inactivityInterface = {
+            update: function() {},
+            getIsActive: function() {
+                return true;
+            }
+        };
+    }
+
+    return inactivityInterface;
+}());

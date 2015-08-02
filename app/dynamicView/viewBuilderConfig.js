@@ -5,6 +5,7 @@
 
     { text: "Misses", width: 3%, align:"center" } to the headerDef, and
     { text: combatantOptions.MISSES, width: 3%, align: "center" } to the bodyDef.
+    You may substitue text for html as needed. HTML will always take precedence over text. If you are not using HTML, make sure you say the html field to null.
     Again, refer to config.js to see what options are available to you.
 
     If you want to edit encounterDef, make sure you use encounterOptions instead.
@@ -19,21 +20,21 @@
     */
 var enableDynamicSort = false,
 
-    dynamicViewList = [
-        /*
-            Data attached to every view filter. Editing this will change every single view.
-        */
-        globalView = {
-            headerDef: [
-                { text: "Job", width: "1.5%", align: "center" },
-                { text: "Name", width: "3%", align: "left" }
-            ],
-            bodyDef: [
-                { html: "<img src='./images/default/{JobOrName}.png' style='width=1.5%;height:auto;' />", align: "center" },
-                { text: combatantOptions.NAME, width: "3%",  align: "left" }
-            ]
-        },
+    /*
+        Data attached to every view filter. Editing this will change every single view.
+    */
+    globalView = {
+        headerDef: [
+            { text: "Job", width: "1.5%", align: "center" },
+            { text: "Name", width: "3%", align: "left" }
+        ],
+        bodyDef: [
+            { html: "<img src='./images/default/{JobOrName}.png' style='width=1.5%;height:auto;' />", align: "center" },
+            { text: combatantOptions.NAME, width: "3%",  align: "left" }
+        ]
+    },
 
+    dynamicViewList = [
         /*
             A view meant to give detailed DPS data.
         */
@@ -51,7 +52,11 @@ var enableDynamicSort = false,
                 { text: combatantOptions.TO_HIT, width: "2%", align: "left" },
                 { text: combatantOptions.MAX_HIT, width: "4%", align: "left"}
             ],
-            encounterDef: "Time: " + encounterOptions.DURATION + "  /  DPS: " + encounterOptions.DPS_ROUNDED + "  /  Damage Dealt: " + encounterOptions.DAMAGE,
+            encounterDef: {
+                text: "Time: {0}  /  DPS: {1}  /  Damage Dealt: {2}",
+                html: null,
+                options: [encounterOptions.DURATION, encounterOptions.DPS_ROUNDED, encounterOptions.DAMAGE]
+            },
             sortDef: combatantOptions.DPS
         },
 
@@ -72,7 +77,11 @@ var enableDynamicSort = false,
                 { text: combatantOptions.OVERHEAL_PERCENT, width: "2%", align: "left" },
                 { text: combatantOptions.MAXHEAL, width: "4%", align: "left"}
             ],
-            encounterDef: "Time: " + encounterOptions.DURATION + "  /  HPS: " + encounterOptions.HPS_ROUNDED + "  /  Healing Dealt: " + encounterOptions.HEALED,
+            encounterDef: {
+                text: "Time: {0}  /  HPS: {1}  /  Healing Done: {2}",
+                html: null,
+                options: [encounterOptions.DURATION, encounterOptions.HPS_ROUNDED, encounterOptions.HEALED]
+            },
             sortDef: combatantOptions.HPS
         },
 
@@ -92,7 +101,11 @@ var enableDynamicSort = false,
                 { text: combatantOptions.DAMAGE_TAKEN, width: "2%", align: "left" },
                 { text: combatantOptions.HEALS_TAKEN, width: "2%", align: "left" },
             ],
-            encounterDef: "Time: " + encounterOptions.DURATION + "  /  DPS: " + encounterOptions.DPS_ROUNDED + "  /  HPS: " + encounterOptions.HPS_ROUNDED,
+            encounterDef: {
+                text: "Time: {0}  /  DPS: {1}  /  HPS: {2}",
+                html: null,
+                options: [encounterOptions.DURATION, encounterOptions.DPS_ROUNDED, encounterOptions.HPS_ROUNDED]
+            },
             sortDef: combatantOptions.DAMAGE_TAKEN
         }
     ];
