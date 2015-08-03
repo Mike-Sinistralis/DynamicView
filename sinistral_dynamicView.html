@@ -4,13 +4,18 @@
 
     For configuration options, please see app/dynamicView/viewBuilderConfig.js
 
-    THIS IS CURRENTLY STILL UNDER CONSTRUCTION
+    Coming Soon:
+        Dynamic Sorting
+        Resizing
+        More cleanup
+        Changing Infinity to 0
+        Better View Menu
 -->
 <html>
 <head>
     <meta charset="utf-8" />
     <title></title>
-    <link rel="stylesheet" type="text/css" href="css/sinistral.css">
+    <link rel="stylesheet" type="text/css" href="css/dynamicView.css">
     <script src="app/config.js"></script>
     <script src="app/dynamicView/viewBuilderConfig.js"></script>
     <script src="app/dynamicView/viewBuilder.js"></script>
@@ -26,6 +31,23 @@
             }
         });
 
+        document.addEventListener("onOverlayStateUpdate", function (e) {
+            if (!e.detail.isLocked) {
+                displayResizeHandle();
+            } else {
+                hideResizeHandle();
+            }
+        });
+
+        function displayResizeHandle() {
+            document.documentElement.classList.add("resizeHandle");
+        }
+
+        function hideResizeHandle() {
+            document.documentElement.classList.remove("resizeHandle");
+        }
+
+
         document.addEventListener('DOMContentLoaded', function() {
             viewBuilder.init();
         }, false);
@@ -33,10 +55,12 @@
 </head>
 <body>
     <div id="wrapper">
+        <div id="views">
+
+        </div>
         <div id="encounter">
             <span id="encounterData" style="color:white;">No data to show.</span>
         </div>
-
         <table id="combatantTable">
 
         </table>
